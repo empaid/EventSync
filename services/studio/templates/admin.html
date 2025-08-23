@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Page</title>
+</head>
+<body>
+    <input type="number" id="audio_seconds">
+
+    <button id="play">Play</button>
+    <button id="pause">Pause</button>
+    <script>
+        
+        document.getElementById('audio_seconds').addEventListener("change", (event)=> {
+            console.log(event.target.value)
+            fetch(`/sync?current_seconds=${event.target.value}`, (response) =>
+            console.log(response)
+        );
+        });
+
+        document.getElementById('play').addEventListener("click", (event) => {
+            fetch(`/sync?current_seconds=${document.getElementById('audio_seconds').value}&play_state=play`, (response) =>
+            console.log(response)
+        )
+        })
+
+        document.getElementById('pause').addEventListener("click", (event) => {
+            fetch(`/sync?current_seconds=${document.getElementById('audio_seconds').value}&play_state=pause`, (response) =>
+            console.log(response)
+        )
+        })
+    </script>
+</body>
+
+</html>

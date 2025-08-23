@@ -1,0 +1,6 @@
+#studio service
+services/studio/env
+services/studio/static
+
+
+.DS_STORE

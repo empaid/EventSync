@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+    let offset = 0;
+    let logList = document.getElementById("logs")
+
+     function logToList(...args) {
+    const li = document.createElement("li");
+    // stringify arrays/objects nicely
+    li.textContent = args.map(a =>
+      (Array.isArray(a) || typeof a === "object") ? JSON.stringify(a) : String(a)
+    ).join(" ");
+    logList.appendChild(li);
+
+    // keep last 100 entries
+    if (logList.children.length > 100) {
+      logList.removeChild(logList.firstChild);
+    }
+    // auto-scroll
+    logList.scrollTop = logList.scrollHeight;
+  }
+
+    const offsets = [];
+    function updateOffset(sample){
+        offsets.push(sample)
+        if(offsets.length > 6 ) offsets.shift();
+        offset = Math.round(offsets.reduce((a,b)=> a+b, 0) / offsets.length);
+        console.log("Offset: ",offset, offsets)
+         logToList("Offset:", offset, offsets);
+    }
+
+    
+
+    window.onload = function () {
+    logList = document.getElementById("logs")
+    const socket = io("");
+    audio_controller = document.getElementById('main');
+    function pingServerForTime(){
+        const t0 = Date.now();
+        socket.emit("fetch_server_time", t0)
+    }
+    socket.on("connect", () => {
+        console.log("🚀 Connected to Socket.IO!")
+        pingServerForTime();
+    });
+
+    socket.on("server_time", (data) => {
+        const t2 = Date.now();
+        const server_time = data.server_now_ms
+        const t0 = data.client_echo_ms
+        const response_time = t2 - t0;
+        const one_way_time = response_time/2;
+        const current_time_at_server = server_time + one_way_time
+        const currOffset = current_time_at_server - t2;
+        updateOffset(currOffset)
+        setTimeout(pingServerForTime, 3000);
+    })
+
+    
+    socket.on("sync", (data) => {
+        const target_client_ms = data.target_server_ms - offset;
+        const t0 = Date.now()
+        const delay = target_client_ms - t0;
+        console.log("Delay:", delay)
+        logToList("Delay:", delay);
+        if(delay < 0){
+            delay = 10;
+            console.log('here')
+        }
+        setTimeout(()=> {
+        
+        if(data.play_state == 'play'){
+            
+            audio_controller.play()
+        }
+
+         if(data.play_state == 'pause'){
+            
+            audio_controller.pause()
+        }
+        audio_controller.currentTime = data.current_seconds
+    }, delay);
+
+        
+        
+        console.log("recv:", data)});
+    }
+    </script>
+
+</head>
+<body>
+    <h1>Vanu: Love You. haa baby degree karlo</h1>
+        <audio  id="main" controls>
+  <source src="/static/audio/temp_song.mp3" preload="true" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+<button>Click</button>
+<ul id="logs">
+
+</ul>
+</body>
+</html>
