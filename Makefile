@@ -1,6 +1,6 @@
 # Admin Service
 STUDIO_SERVICE=services/studio
-FLASK_APP=${STUDIO_SERVICE}/app/app:create_app
+FLASK_APP=${STUDIO_SERVICE}/app:create_app
 PYTHON=$(STUDIO_SERVICE)/env/bin/python
 PIP=$(STUDIO_SERVICE)/env/bin/pip
 FLASK=$(STUDIO_SERVICE)/env/bin/flask
@@ -12,7 +12,10 @@ install-packages:
 	$(PIP) install -r $(STUDIO_SERVICE)/requirements.txt
 
 run-studio-server:
-	$(PYTHON) $(STUDIO_SERVICE)/app/app.py
+	FLASK_APP=$(FLASK_APP) \
+	FLASK_RUN_HOST=0.0.0.0 \
+	FLASK_RUN_PORT=3000 \
+	$(FLASK) run --debug
 
 
 db-init:

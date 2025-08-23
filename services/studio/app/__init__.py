@@ -2,7 +2,8 @@ from flask import Flask, render_template, request
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from config import Config, Debug
+from .config import Config, Debug
+from flask_jwt_extended import JWTManager
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -13,9 +14,12 @@ def create_app(config: type[Config] = Config):
     app.config.from_prefixed_env()
     db.init_app(app)
     migrate.init_app(app, db)
-    
-    return app
+    JWTManager(app)
 
-if __name__=='__main__':
-    app = create_app(config=Debug)
-    app.run( host="0.0.0.0", port=Config.PORT, debug=Config.DEBUG)
+    from app.routes.user import user_bp
+    app.register_blueprint(user_bp, url_prefix="/user")
+
+    from app.routes.event import event_bp
+    app.register_blueprint(event_bp, url_prefix="/event")
+
+    return app
