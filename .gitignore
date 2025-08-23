@@ -1,6 +1,9 @@
 #studio service
 services/studio/env
-services/studio/static
+services/studio/app/static/audio
 
 
 .DS_STORE
+*.env
+
+__pycache__/

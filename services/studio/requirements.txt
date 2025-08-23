@@ -1,2 +1,6 @@
 flask
 flask-socketio
+python-dotenv
+Flask-SQLAlchemy 
+psycopg2-binary
+flask-migrate

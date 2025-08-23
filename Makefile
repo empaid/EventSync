@@ -1,13 +1,25 @@
 # Admin Service
-ADMIN_SERVICE_DIR=services/admin
-PYTHON=$(ADMIN_SERVICE_DIR)/env/bin/python
-PIP=$(ADMIN_SERVICE_DIR)/env/bin/pip
+STUDIO_SERVICE=services/studio
+FLASK_APP=${STUDIO_SERVICE}/app/app:create_app
+PYTHON=$(STUDIO_SERVICE)/env/bin/python
+PIP=$(STUDIO_SERVICE)/env/bin/pip
+FLASK=$(STUDIO_SERVICE)/env/bin/flask
 
 create-python-env:
-	@python -m venv $(ADMIN_SERVICE_DIR)/env
+	@python -m venv $(STUDIO_SERVICE)/env
 
 install-packages:
-	$(PIP) install -r $(ADMIN_SERVICE_DIR)/requirements.txt
+	$(PIP) install -r $(STUDIO_SERVICE)/requirements.txt
 
 run-studio-server:
-	$(PYTHON) $(ADMIN_SERVICE_DIR)/main.py
+	$(PYTHON) $(STUDIO_SERVICE)/app/app.py
+
+
+db-init:
+	@cd $(STUDIO_SERVICE)/app && FLASK_APP=../../../$(FLASK_APP) ../../../$(FLASK) db init
+
+db-migrate:
+	@cd $(STUDIO_SERVICE)/app && FLASK_APP=../../../$(FLASK_APP) ../../../$(FLASK) db migrate -m "${m}"
+
+db-upgrade:
+	@cd $(STUDIO_SERVICE)/app && FLASK_APP=../../../$(FLASK_APP) ../../../$(FLASK) db upgrade
