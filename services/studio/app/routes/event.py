@@ -8,13 +8,7 @@ from flask_jwt_extended import (
 
 event_bp = Blueprint("events", __name__)
 
-@event_bp.route("/", methods=["GET"])
-@jwt_required()
-def list_events():
-    data = request.json
-    return "true"
-
-@event_bp.route("/", methods=["POST"])
+@event_bp.route("", methods=["POST"])
 @jwt_required()
 def create_event():
     data = request.json
@@ -39,3 +33,21 @@ def create_event():
             "title": event.title
         }
     })
+
+
+
+@event_bp.route("", methods=["GET"])
+@jwt_required()
+def list_events():
+    user_id = get_jwt_identity()
+    
+    events = Event.query.filter_by(user_id=user_id)
+    result = []
+    for event in events:
+        result.append({
+            "id": event.id,
+            "title": event.title, 
+        })
+    return jsonify({
+        "events": result
+    }), 200

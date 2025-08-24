@@ -1,49 +1,64 @@
-import { NextRequest, NextResponse } from "next/server";
+// app/api/proxy/[...path]/route.ts
 
-export const runtime = "nodejs";
+import { NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
 
-const FLASK_BASE_URL = process.env.FLASK_BASE_URL!;
-const COOKIE_NAME = process.env.COOKIE_NAME || "accessToken";
+async function handler(
+  req: NextRequest,
+  { params }: { params: { path: string[] } }
+) {
 
-export async function GET(req: NextRequest, ctx: { params: { path: string[] } }) {
-  return forward(req, ctx.params);
-}
-export async function POST(req: NextRequest, ctx: { params: { path: string[] } }) {
-  return forward(req, ctx.params);
-}
-export async function PUT(req: NextRequest, ctx: { params: { path: string[] } }) {
-  return forward(req, ctx.params);
-}
-export async function PATCH(req: NextRequest, ctx: { params: { path: string[] } }) {
-  return forward(req, ctx.params);
-}
-export async function DELETE(req: NextRequest, ctx: { params: { path: string[] } }) {
-  return forward(req, ctx.params);
-}
+  const studioBaseUrl = process.env.STUDIO_BASE_URL;
+  const cookieName = process.env.COOKIE_NAME;
 
-async function forward(req: NextRequest, params: { path: string[] }) {
-  const token = req.cookies.get(COOKIE_NAME)?.value ?? "";
-  const pathname = `/${(params.path ?? []).join("/")}`;
-  const url = `${FLASK_BASE_URL}${pathname}${req.nextUrl.search}`;
-
-  const method = req.method.toUpperCase();
-  const body = method === "GET" || method === "HEAD" ? undefined : req.body;
-
- 
-  const headers = new Headers(req.headers);
-  headers.delete("host");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-
-  const resp = await fetch(url, { method, headers, body, redirect: "manual" });
-
-  const res = new NextResponse(resp.body, {
-    status: resp.status,
-    statusText: resp.statusText,
-  });
-
-  for (const h of ["content-type", "content-length", "etag", "cache-control", "last-modified"]) {
-    const v = resp.headers.get(h);
-    if (v) res.headers.set(h, v);
+  if (!studioBaseUrl || !cookieName) {
+    console.error('Missing environment variables for proxy');
+    return new Response('Proxy configuration error.', { status: 500 });
   }
-  return res;
+
+
+  const cookieStore = cookies();
+  const accessToken = (await cookieStore).get(cookieName)?.value;
+
+  if (!accessToken) {
+
+    return new Response('Access token not found.', { status: 401 });
+  }
+
+  const destinationPath = (await params).path.join('/');
+  const targetUrl = `${studioBaseUrl}/${destinationPath}`;
+
+  try {
+    console.log(targetUrl)
+    const response = await fetch(targetUrl, {
+      method: req.method,
+      headers: {
+
+        'Authorization': `Bearer ${accessToken}`,
+    
+        ...(req.headers.get('content-type') && {
+          'Content-Type': req.headers.get('content-type')!,
+        }),
+      },
+
+      body: req.body,
+
+      // @ts-ignore
+      duplex: 'half',
+    });
+
+
+    return response;
+    
+  } catch (error) {
+    console.error('Proxy fetch error:', error);
+    return new Response('Error proxying request.', { status: 502 }); 
+  }
 }
+
+
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const DELETE = handler;
+export const PATCH = handler;
