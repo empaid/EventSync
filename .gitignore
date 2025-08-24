@@ -7,3 +7,6 @@ services/studio/app/static/audio
 *.env
 
 __pycache__/
+
+
+apps/

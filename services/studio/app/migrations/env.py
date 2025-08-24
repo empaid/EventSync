@@ -7,6 +7,7 @@ from alembic import context
 
 from app.models.User import User
 from app.models.Event import Event
+from app.models.Asset import Asset
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

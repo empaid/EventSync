@@ -7,7 +7,7 @@ from flask_jwt_extended import (
     jwt_required, get_jwt_identity
 )
 
-user_bp = Blueprint("user", __name__)
+user_bp = Blueprint("users", __name__)
 
 @user_bp.route("/", methods=["GET"])
 def list_users():

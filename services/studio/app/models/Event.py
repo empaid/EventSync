@@ -15,3 +15,4 @@ class Event(db.Model):
     user_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=False)
     
     user = db.relationship("User", back_populates="events")
+    assets = db.relationship("Asset", back_populates="event")

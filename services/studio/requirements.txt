@@ -6,3 +6,4 @@ psycopg2-binary
 flask-migrate
 bcrypt
 flask-jwt-extended
+boto3

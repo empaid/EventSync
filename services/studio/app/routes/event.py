@@ -1,13 +1,12 @@
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.Event import Event
-
 from flask_jwt_extended import (
     JWTManager, create_access_token,
     jwt_required, get_jwt_identity
 )
 
-event_bp = Blueprint("event", __name__)
+event_bp = Blueprint("events", __name__)
 
 @event_bp.route("/", methods=["GET"])
 @jwt_required()
