@@ -21,6 +21,7 @@ def list_users():
 @user_bp.route("/register", methods=["POST"])
 def register():
     data = request.json
+
     if not data or "email" not in data or "password" not in data:
         return jsonify({"error": "Email and password are required"}), 400
     

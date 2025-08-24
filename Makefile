@@ -14,7 +14,7 @@ install-packages:
 run-studio-server:
 	FLASK_APP=$(FLASK_APP) \
 	FLASK_RUN_HOST=0.0.0.0 \
-	FLASK_RUN_PORT=3000 \
+	FLASK_RUN_PORT=8000 \
 	$(FLASK) run --debug
 
 
@@ -26,3 +26,11 @@ db-migrate:
 
 db-upgrade:
 	@cd $(STUDIO_SERVICE)/app && FLASK_APP=../../../$(FLASK_APP) ../../../$(FLASK) db upgrade
+
+
+
+
+# Webapp
+WEBAPP=apps/web
+run-webapp:
+	@cd $(WEBAPP) && npm run dev
