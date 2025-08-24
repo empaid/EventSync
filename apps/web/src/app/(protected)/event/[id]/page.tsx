@@ -11,7 +11,6 @@ export default async function EventPage({ params }: { params: { id: string } }) 
           <h1 className="text-2xl font-bold">Event {id}</h1>
           <p className="text-gray-500">Manage audio assets for this event.</p>
         </div>
-        {/* Single button to open upload popup; all logic stays inside EventUploader */}
         <EventUploader eventId={id} />
       </header>
 

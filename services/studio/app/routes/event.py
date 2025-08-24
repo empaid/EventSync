@@ -54,6 +54,7 @@ def list_events():
         result.append({
             "id": event.id,
             "title": event.title, 
+            "live": event.live
         })
     return jsonify({
         "events": result
@@ -76,6 +77,7 @@ def get_event(event_id):
     return jsonify({
         "id": str(ev.id),
         "title": ev.title,
+        "live": ev.live,
         "assets_count": len(ev.assets),
         "assets": [
             {
