@@ -5,6 +5,7 @@ from app.models.Event import Event
 from app.models.Asset import Asset, AssetStatus
 from app.config import Config
 from app.storage.s3 import s3_client
+import os
 from flask_jwt_extended import (
     JWTManager, create_access_token,
     jwt_required, get_jwt_identity
@@ -73,6 +74,7 @@ def upload_complete(event_id, asset_id):
     
     asset.status = AssetStatus.uploaded
     asset.duration_ms = data.get("duration_ms")
+    asset.path =f"{Config.AWS_BASE_ENDPOINT}/{Config.BUCKET}/events/{asset.event_id}/assets/{asset.id}" 
     db.session.commit()
 
     return jsonify({
