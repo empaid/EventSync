@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import NewEventForm from "./NewEventForm";
-// import NewEventForm from "./NewEventForm";
 
 export default function NewEventButton() {
   const [open, setOpen] = useState(false);

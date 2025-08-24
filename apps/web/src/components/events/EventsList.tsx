@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type EventItem = {
@@ -65,17 +65,24 @@ export default function EventList() {
   }
 
   if (events.length === 0) {
-    return <p className="text-gray-500">No events yet. Create your first one!</p>;
+    return <p className="text-gray-500">No events yet.</p>;
   }
 
   return (
     <ul className="divide-y rounded border">
       {events.map((ev) => (
-        <li key={ev.id} className="p-4 flex items-center justify-between">
-          <div className="min-w-0">
-            <p className="font-medium truncate">{ev.title}</p>
-            <p className="text-sm text-gray-500 truncate">{ev.id}</p>
-          </div>
+        <li key={ev.id} className="p-0">
+          <Link
+            href={`/event/${ev.id}`}
+            className="flex items-center justify-between p-4 focus:outline-none focus-visible:ring rounded hover:bg-gray-50"
+            prefetch={false}
+          >
+            <div className="min-w-0">
+              <p className="font-medium truncate">{ev.title}</p>
+              <p className="text-sm text-gray-500 truncate">{ev.id}</p>
+            </div>
+            <span aria-hidden>›</span>
+          </Link>
         </li>
       ))}
     </ul>
