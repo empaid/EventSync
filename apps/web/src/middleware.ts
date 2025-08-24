@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const COOKIE_NAME = process.env.COOKIE_NAME || "accessToken";
-const LOGIN_PATH = "/login";
-const DASHBOARD_PATH = "/dashboard";
+const PUBLIC_PATHS = ["/login"];
+const DEFAULT_AUTHENTICATED_PATH = "/dashboard";
 
 function isTokenInvalidOrExpired(token: string): boolean {
   try {
@@ -10,45 +10,52 @@ function isTokenInvalidOrExpired(token: string): boolean {
     if (!payloadB64) return true;
 
     const normalized = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
-    const json = JSON.parse(atob(normalized));
-    const exp = typeof json?.exp === "number" ? json.exp : null;
+    const payloadJson = atob(normalized);
+    const payload = JSON.parse(payloadJson);
 
+    const exp = typeof payload?.exp === "number" ? payload.exp : null;
     if (!exp) return true;
 
-    const now = Math.floor(Date.now() / 1000);
-    return exp <= now;
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    return exp <= nowInSeconds;
   } catch {
     return true;
   }
 }
 
 export function middleware(req: NextRequest) {
-  const { nextUrl, url } = req;
+  const { pathname, search } = req.nextUrl;
   const token = req.cookies.get(COOKIE_NAME)?.value;
-  const pathname = nextUrl.pathname;
 
-  const isTryingToAccessDashboard = pathname.startsWith(DASHBOARD_PATH);
-  const isTryingToAccessLogin = pathname === LOGIN_PATH;
-  const isTokenInvalid = !token || isTokenInvalidOrExpired(token);
+  const isTokenValid = token && !isTokenInvalidOrExpired(token);
+  const isPublicPath = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
 
-  if (isTryingToAccessDashboard && isTokenInvalid) {
-    const loginUrl = new URL(LOGIN_PATH, url);
-    loginUrl.searchParams.set("returnTo", pathname + nextUrl.search);
-
-    const res = NextResponse.redirect(loginUrl);
-    if (token) {
-      res.cookies.set({ name: COOKIE_NAME, value: "", path: "/", maxAge: 0 });
-    }
-    return res;
+  if (isTokenValid && isPublicPath) {
+    return NextResponse.redirect(new URL(DEFAULT_AUTHENTICATED_PATH, req.url));
   }
 
-  if (!isTokenInvalid && isTryingToAccessLogin) {
-    return NextResponse.redirect(new URL(DASHBOARD_PATH, url));
+  if (!isTokenValid && !isPublicPath) {
+    const loginUrl = new URL("/login", req.url);
+    if (pathname !== "/") {
+      loginUrl.searchParams.set("returnTo", `${pathname}${search}`);
+    }
+
+    const response = NextResponse.redirect(loginUrl);
+
+    if (token) {
+      response.cookies.set({ name: COOKIE_NAME, value: "", path: "/", maxAge: 0 });
+    }
+
+    return response;
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/login", "/dashboard/:path*"],
+  matcher: [
+    "/login",
+    "/dashboard/:path*",
+    "/event/:path*",
+  ],
 };

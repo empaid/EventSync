@@ -1,8 +1,8 @@
 import EventDetails from "@/components/events/EventDetails";
 import EventUploader from "@/components/events/Uploader";
 
-export default function EventPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function EventPage({ params }: { params: { id: string } }) {
+  const { id } = await params;
 
   return (
     <main className="min-h-dvh p-6 space-y-6">

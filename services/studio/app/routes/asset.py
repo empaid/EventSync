@@ -81,3 +81,36 @@ def upload_complete(event_id, asset_id):
         "id": asset.id,
         "status": asset.status.value
     })
+
+@asset_bp.route("<uuid:asset_id>", methods=["PATCH"])
+@jwt_required()
+def patch_asset(event_id, asset_id):
+    data = request.json
+    user_id = get_jwt_identity()
+
+    if not validate_event_authorization(user_id, event_id):
+        return jsonify({
+            "error": "Unauthorized"
+        }), 403
+    
+    asset = db.session.get(Asset, asset_id)
+    if not asset or asset.event_id != event_id:
+        return jsonify({
+            "error": "Asset Not Found"
+        }), 400
+    
+    if "active" in data:
+        asset.active = bool(data["active"])
+    if "start_media_ms" in data:
+        try:
+            asset.start_media_ms = int(data["start_media_ms"])
+        except (TypeError, ValueError):
+            return jsonify({"error": "start_media_ms must be integer ms"}), 400
+
+    db.session.commit()
+    return jsonify({
+        "id": str(asset.id),
+        "status": asset.status.value,
+        "active": asset.active,
+        "start_media_ms": asset.start_media_ms,
+    }), 200

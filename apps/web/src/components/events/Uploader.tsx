@@ -116,7 +116,7 @@ export default function EventUploader({ eventId }: { eventId: string }) {
 
   return (
     <>
-      {/* Trigger button */}
+   
       <button
         onClick={() => setOpen(true)}
         className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-60"
@@ -125,7 +125,7 @@ export default function EventUploader({ eventId }: { eventId: string }) {
         Upload files
       </button>
 
-      {/* Modal */}
+      
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
