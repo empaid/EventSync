@@ -15,11 +15,11 @@ asset_bp = Blueprint("assets", __name__)
 
 def validate_event_authorization(user_id, event_id):
     event = Event.query.filter_by(id=event_id).first()
-    if not event or user_id != event.user_id:
+    if not event or str(user_id) != str(event.user_id):
         return False
     return True
 
-@asset_bp.route("/", methods=["POST"])
+@asset_bp.route("", methods=["POST"])
 @jwt_required()
 def create_upload_link(event_id):
     data = request.json
@@ -72,6 +72,7 @@ def upload_complete(event_id, asset_id):
         }), 400
     
     asset.status = AssetStatus.uploaded
+    asset.duration_ms = data.get("duration_ms")
     db.session.commit()
 
     return jsonify({
