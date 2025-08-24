@@ -17,6 +17,9 @@ run-studio-server:
 	FLASK_RUN_PORT=8000 \
 	$(FLASK) run --debug
 
+run-studio-ws-server:
+	@cd $(STUDIO_SERVICE) && ../../${PYTHON} -m app.main
+
 
 db-init:
 	@cd $(STUDIO_SERVICE)/app && FLASK_APP=../../../$(FLASK_APP) ../../../$(FLASK) db init

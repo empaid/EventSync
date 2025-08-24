@@ -28,4 +28,8 @@ def create_app(config: type[Config] = Config):
     from app.routes.asset import asset_bp
     app.register_blueprint(asset_bp, url_prefix='/events/<uuid:event_id>/assets')
 
+
+    from app.socket.socketio import init_socketio
+    init_socketio(app)
+
     return app
