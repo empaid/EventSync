@@ -1,5 +1,6 @@
 from flask_socketio import SocketIO, Namespace, emit, join_room
 import time
+from flask import request
 from app.models.Event import Event
 from sqlalchemy.orm import selectinload
 
@@ -53,21 +54,44 @@ class EventNamespace(Namespace):
     def on_fetch_server_time(self, data):
         server_now_ms = int(time.time() * 1000)
         emit("server_time", {"server_now_ms": server_now_ms, "client_echo_ms": data})
-    
+
+    def on_sync(self, data):
+        
+        event_id = data.get("event_id")
+        elapsed_ms = data.get("elapsed_ms")
+        print(elapsed_ms)
+        print("sync room", room_id(str(event_id)))
+        emit(
+            "sync_client",
+             {
+                "target_server_ms": elapsed_ms,
+                "play_state": "play"
+            },
+            to=room_id(str(event_id))
+        )
+
     def on_event_broadcast(self, data):
         event_id = data.get("event_id")
         event_name = data.get("event_name")
         payload = data.get("payload")
-
-        if not event_id:
+        if not event_id or not event_name:
             return
-        
-        socketio.emit(event_name, payload, room=room_id(str(event_id)))
+        print("Sync room", room_id(str(event_id)))
+        socketio.emit(
+            event_name,
+            payload,
+            to=room_id(str(event_id)),
+            namespace="/event"
+        )
     
-
-
-def emit_to_event(event_id, event_name, payload):
-    socketio.emit(event_name, payload, room=room_id(str(event_id)), namespace="/ws")
+def emit_to_event(event_id, event_name, payload, skip_sid=None):
+    socketio.emit(
+        event_name,
+        payload,
+        to=room_id(str(event_id)),
+        namespace="/event",
+        skip_sid=skip_sid
+    )
 
 
 def init_socketio(app):

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
+import LiveEvent from "./LiveEvent";
 type Asset = {
   id: string;
   name: string;
@@ -177,6 +177,7 @@ export default function EventDetails({ eventId }: { eventId: string }) {
 
   return (
     <section className="space-y-4">
+      <LiveEvent eventId={eventId} />
       <div className="rounded-xl border p-4">
         {loading ? (
           <div className="animate-pulse text-gray-500">Loading event…</div>

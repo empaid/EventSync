@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="cache.js"></script>
+    <script src="audio_helper.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        #logs::-webkit-scrollbar {
+            width: 5px;
+        }
+        #logs::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #logs::-webkit-scrollbar-thumb {
+            background: #0d9488; 
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 antialiased overflow-hidden">
+
+    <div id="start-screen" class="fixed inset-0 z-50 flex justify-center items-center bg-gray-900 transition-opacity duration-500 ease-in-out">
+        <button id="start-button" class="py-4 px-8 text-xl font-bold rounded-full bg-teal-400 text-gray-900 hover:scale-105 hover:shadow-lg hover:shadow-teal-400/50 transition-transform duration-200">
+            Let's start
+        </button>
+    </div>
+
+    <main class="flex flex-col items-center justify-center h-screen p-5 text-center">
+        <h1 id="event-name" class="text-4xl md:text-5xl font-bold mb-4 text-white"></h1>
+        
+        <div id="content" class="w-full max-w-2xl bg-gray-800 p-8 rounded-2xl shadow-2xl">
+            <div id="status-message" class="text-2xl text-gray-400">Please wait. Event is not live.</div>
+            
+            <div id="player-container" class="hidden flex-col items-center">
+                <div id="time-display" class="text-6xl md:text-7xl font-light tracking-wider text-teal-400">00:00:000</div>
+            </div>
+        </div>
+    </main>
+
+    <div class="fixed bottom-4 left-4 w-80 h-40 bg-black/30 backdrop-blur-sm rounded-lg overflow-hidden text-xs z-50 opacity-20 hover:opacity-100 transition-opacity">
+        <ul id="logs" class="list-none m-0 p-3 h-full overflow-y-auto text-gray-300"></ul>
+    </div>
+
+    <script>
+        let live = false;
+        let event;
+        let offset = 0;
+        let rtt = 0;
+        let logList;
+        let audio;
+
+        function logToList(...args) {
+            if (!logList) return;
+            const li = document.createElement("li");
+            li.textContent = args.map(a =>
+                (Array.isArray(a) || typeof a === "object") ? JSON.stringify(a) : String(a)
+            ).join(" ");
+            logList.appendChild(li);
+
+            if (logList.children.length > 100) {
+                logList.removeChild(logList.firstChild);
+            }
+            logList.scrollTop = logList.scrollHeight;
+        }
+
+        const offsets = [];
+        const rttSamples = [];
+
+        function updateOffset(sample) {
+            offsets.push(sample);
+            if (offsets.length > 6) offsets.shift();
+            offset = Math.round(offsets.reduce((a, b) => a + b, 0) / offsets.length);
+            logToList("Offset:", offset, offsets);
+        }
+
+        function updaterrtSample(sample) {
+            rttSamples.push(sample);
+            if (rttSamples.length > 6) rttSamples.shift();
+            rtt = Math.round(rttSamples.reduce((a, b) => a + b, 0) / rttSamples.length);
+            logToList("RTT:", rtt, rttSamples);
+        }
+        
+        function formatTime(milliseconds) {
+            if (isNaN(milliseconds) || milliseconds < 0) {
+                return "00:00:000";
+            }
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+            const seconds = String(totalSeconds % 60).padStart(2, '0');
+            const ms = String(Math.floor(milliseconds % 1000)).padStart(3, '0');
+            return `${minutes}:${seconds}:${ms}`;
+        }
+        
+        function updatePlayerTime() {
+            if (audio && !audio.paused) {
+                const timeDisplay = document.getElementById('time-display');
+                timeDisplay.textContent = formatTime(audio.currentTime * 1000);
+            }
+            requestAnimationFrame(updatePlayerTime);
+        }
+
+        function initializeApp() {
+            const startScreen = document.getElementById('start-screen');
+            startScreen.classList.add('opacity-0');
+            setTimeout(() => {
+                startScreen.classList.add('hidden');
+            }, 500);
+
+            logList = document.getElementById("logs");
+            const socket = io("/event");
+            const params = new URLSearchParams(window.location.search);
+            const eventId = params.get('event_id');
+
+            socket.emit("join_event", { event_id: eventId });
+
+            function pingServerForTime() {
+                const t0 = Date.now();
+                socket.emit("fetch_server_time", t0);
+            }
+
+            socket.on("connect", () => {
+                logToList("Connected to server!");
+                pingServerForTime();
+            });
+
+            socket.on("joined", async (data) => {
+                event = data.event;
+                logToList("Joined event:", event.title);
+                document.getElementById('event-name').innerHTML = event.title;
+                const assets = (event.assets || []).filter(a => a.active === true);
+                if (assets.length > 0) {
+                   await cacheEventAssets(assets);
+                }
+
+                const statusMessage = document.getElementById('status-message');
+                const playerContainer = document.getElementById('player-container');
+
+                if (!event.live) {
+                    statusMessage.classList.remove('hidden');
+                    playerContainer.classList.add('hidden');
+                } else {
+                    statusMessage.classList.add('hidden');
+                    playerContainer.classList.remove('hidden');
+                    playerContainer.classList.add('flex');
+                    if (!audio) {
+                        audio = new Audio();
+                        audio.id = "event-audio";
+                        audio.preload = "auto";
+                        document.body.appendChild(audio);
+                        requestAnimationFrame(updatePlayerTime);
+                    }
+                }
+            });
+
+            socket.on("server_time", (data) => {
+                const t2 = Date.now();
+                const server_time = data.server_now_ms;
+                const t0 = data.client_echo_ms;
+                const response_time = t2 - t0;
+                const one_way_time = response_time / 2;
+                const current_time_at_server = server_time + one_way_time;
+                const currOffset = current_time_at_server - t2;
+                updateOffset(currOffset);
+                updaterrtSample(response_time);
+                setTimeout(pingServerForTime, 3000);
+            });
+
+            socket.on("sync_client", async (data) => {
+                logToList("Syncing client:", data);
+                if (!audio || !event || !event.assets.length) return;
+                
+                const target_client_ms = data.target_server_ms + rtt / 2;
+                if(!audio.src)
+                  audio.src = assetBlobUrlById.get(event.assets[0].id);
+                let difference = target_client_ms - audio.currentTime*1000;
+                logToList("Difference: ", difference)
+                if(Math.abs(difference) >= 1000){
+                  audio.currentTime = target_client_ms/1000
+                } else {
+                  logToList("Current Playback Rate: ", (5000 + difference) / (5000))
+                //   audio.playbackRate = (5000 + difference) / (5000)
+                  setTimeout(() => {
+                    audio.playbackRate = 1;
+                    logToList("reset")
+                  }, 5000)
+                }
+                if(data.play_state === 'play') {
+                    audio.play().catch(e => logToList("Playback error:", e));
+                } else if(data.play_state === 'pause') {
+                    audio.pause();
+                }
+            });
+        }
+        
+        window.onload = function() {
+            document.getElementById('start-button').addEventListener('click', initializeApp);
+        };
+    </script>
+    
+</body>
+</html>

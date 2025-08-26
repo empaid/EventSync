@@ -1,6 +1,9 @@
 async function opfsSaveFromURL(url, name, onProgress) {
+
   const resp = await fetch(url, { mode: 'cors', credentials: 'omit' });
+
   if (!resp.ok || !resp.body) throw new Error(`fetch failed: ${resp.status}`);
+
   const total = Number(resp.headers.get('Content-Length') || 0);
   const reader = resp.body.getReader();
 
@@ -16,6 +19,7 @@ async function opfsSaveFromURL(url, name, onProgress) {
     received += value.byteLength;
     if (onProgress && total) onProgress(Math.round((received / total) * 100));
   }
+//   logToList("fetched file")
   await writable.close();
 }
 
@@ -34,7 +38,9 @@ async function cacheOneAssetOPFS(asset) {
     logToList('OPFS downloading', asset.name);
     await opfsSaveFromURL(asset.path, filename, p => logToList(`[${asset.name}] ${p}%`));
   }
+//   logToList('Hardik Purohit')
   const blobUrl = await opfsGetBlobURL(filename);
+  logToList(asset.id, blobUrl)
   assetBlobUrlById.set(asset.id, blobUrl);
   return blobUrl;
 }
@@ -50,10 +56,12 @@ const getExt = (n='') => {
 
 async function opfsHasFile(name) {
   try {
+
     const root = await opfsRoot();
     await root.getFileHandle(name, { create: false });
     return true;
-  } catch { return false; }
+  } catch { 
+    return false; }
 }
 
 async function opfsSupported() {

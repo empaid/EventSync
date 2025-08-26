@@ -7,6 +7,8 @@ from flask_jwt_extended import (
     jwt_required, get_jwt_identity
 )
 
+from app.socket.socketio import emit_to_event
+
 event_bp = Blueprint("events", __name__)
 
 def validate_event_authorization(user_id, event_id):
@@ -93,3 +95,47 @@ def get_event(event_id):
             for a in ev.assets
         ],
     }), 200
+
+
+@event_bp.route("/<uuid:event_id>", methods=["PATCH"])
+@jwt_required()
+def patch_event(event_id):
+    data = request.json
+    user_id = get_jwt_identity()
+    ev = (
+        Event.query
+        .options(selectinload(Event.assets))
+        .filter_by(id=event_id, user_id=user_id)
+        .first()
+    )
+    if not ev:
+        return jsonify({"error": "Not Found"}), 404
+
+    response = {
+        "id": str(ev.id),
+        "title": ev.title,
+        "live": ev.live,
+        "assets_count": len(ev.assets),
+        "assets": [
+            {
+                "id": str(a.id),
+                "name": a.name,
+                "mime_type": a.mime_type,
+                "status": a.status.value,
+                "duration_ms": a.duration_ms,
+                "path":a.path,
+                "start_media_ms": a.start_media_ms,
+                "active": a.active
+            }
+            for a in ev.assets
+        ],
+    }
+
+    if "live" in data:
+        ev.live = data.get("live", False)
+        emit_to_event(ev.id, "update", response)
+    
+    db.session.commit()
+
+
+    return jsonify(response), 200

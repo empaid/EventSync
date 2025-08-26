@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Event</title>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="opfs.js"></script>
+    <script src="cache.js"></script>
     <script>
 
     let live = false;
     let event;  
     let offset = 0;
+    let rtt = 0;
     let logList = document.getElementById("logs")
 
      function logToList(...args) {
@@ -29,6 +30,7 @@
   }
 
     const offsets = [];
+    const rttSamples=[];
     function updateOffset(sample){
         offsets.push(sample)
         if(offsets.length > 6 ) offsets.shift();
@@ -37,13 +39,21 @@
          logToList("Offset:", offset, offsets);
     }
     
+    function updaterrtSample(sample){
+        rttSamples.push(sample)
+        if(rttSamples.length > 6 ) rttSamples.shift();
+        rtt = Math.round(rttSamples.reduce((a,b)=> a+b, 0) / rttSamples.length);
+        console.log("Offset: ",offset, rttSamples)
+         logToList("Offset:", offset, rttSamples);
+    }
+    
 
     
 
     window.onload = function () {
     
     logList = document.getElementById("logs")
-    const socket = io("ws://localhost:8000/event");
+    const socket = io("/event");
     
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get('event_id');
@@ -68,16 +78,28 @@
       document.getElementById('event-name').innerHTML = event.title;
       const assets = (event.assets || []).filter(a => a.active == true);
       if (!assets.length) return;
-      await cacheEventAssetsOPFS(assets);
-      
+      await cacheEventAssets(assets);
+      let content = document.getElementById('content');
       if(!event.live){
-        document.getElementById('content').innerHTML = 
+        content.innerHTML = 
         `
             Please wait. Event is not live.
         `;
+      } else {
+          let audio = document.getElementById("event-audio");
+        if (!audio) {
+            audio = document.createElement("audio");
+            audio.id = "event-audio";
+            audio.controls = true;
+            audio.preload = "auto";
+            audio.style.width = "100%";
+            document.body.appendChild(audio);
+        }
+        content.appendChild(audio)
       }
 
     });
+
 
     socket.on("server_time", (data) => {
         const t2 = Date.now();
@@ -87,45 +109,53 @@
         const one_way_time = response_time/2;
         const current_time_at_server = server_time + one_way_time
         const currOffset = current_time_at_server - t2;
-        updateOffset(currOffset)
+        updateOffset(currOffset);
+        updaterrtSample(response_time);
         setTimeout(pingServerForTime, 3000);
     })
 
     
-    socket.on("sync", (data) => {
-        const target_client_ms = data.target_server_ms - offset;
-        const t0 = Date.now()
-        const delay = target_client_ms - t0;
-        console.log("Delay:", delay)
-        logToList("Delay:", delay);
-        if(delay < 0){
-            delay = 10;
-            console.log('here')
-        }
-        setTimeout(()=> {
+    socket.on("sync_client", async (data) => {
+        const target_client_ms = data.target_server_ms + rtt/2;
+        console.log(target_client_ms)
+        audio = document.getElementById('event-audio')
+        audio.src =  assetBlobUrlById.get(event.assets[0].id)
+        audio.currentTime = (target_client_ms / 1000);
+        audio.play()
+    });
+}
+    
+        // const t0 = Date.now()
+        // const delay = target_client_ms - t0;
+        // console.log("Delay:", delay)
+        // logToList("Delay:", delay);
+        // if(delay < 0){
+        //     delay = 10;
+        //     console.log('here')
+        // }
+        // setTimeout(()=> {
         
-        if(data.play_state == 'play'){
+        // if(data.play_state == 'play'){
             
-            audio_controller.play()
-        }
+        //     audio_controller.play()
+        // }
 
-         if(data.play_state == 'pause'){
+        //  if(data.play_state == 'pause'){
             
-            audio_controller.pause()
-        }
-        audio_controller.currentTime = data.current_seconds
-    }, delay);
+        //     audio_controller.pause()
+        // }
+        // audio_controller.currentTime = data.current_seconds
+    // }, delay);
 
         
         
-        console.log("recv:", data)});
-    }
+        // console.log("recv:", data)});
     </script>
 
 </head>
 <body>
     <h1 id="event-name"></h1>
-    <!-- <audio id="audio" controls></audio> -->
+
     <div id="content">
 
     </div>
