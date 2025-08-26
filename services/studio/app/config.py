@@ -12,7 +12,8 @@ class Config:
     BUCKET = os.getenv("AWS_S3_ASSET_BUCKET")
     AWS_REGION = os.getenv("AWS_DEFAULT_REGION")
     AWS_BASE_ENDPOINT = os.getenv("AWS_BASE_ENDPOINT")
-
+    AWS_ACCESS_KEY=os.getenv("AWS_ACCESS_KEY")
+    AWS_SECRET_KEY=os.getenv("AWS_SECRET_KEY")
 
 class Debug(Config):
     DEBUG=True

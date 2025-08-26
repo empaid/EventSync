@@ -42,6 +42,6 @@ export async function POST(req: Request) {
         setAuthCookie(response, accessToken);
         return response;
     } catch(err){
-        return NextResponse.json({ok: false, error: "Something unexpected happened"}, {status: 500})
+        return NextResponse.json({ok: false, error: "Something unexpected happened " + err}, {status: 500})
     }
 }

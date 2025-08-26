@@ -12,6 +12,34 @@ services:
       - db-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - eventsync
+
+  studio:
+    build:
+      context: ./services/studio
+      dockerfile: Dockerfile
+    container_name: studio
+    networks:
+      - eventsync
+    ports:
+      - "8000:8000"
+    
+  webapp:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: webapp
+    networks:
+      - eventsync
+    ports:
+      - "443:3000"
+    
+    
+networks:
+  eventsync:
+    driver: bridge
+
 
 volumes:
   db-data:

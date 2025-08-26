@@ -31,6 +31,9 @@ db-upgrade:
 	@cd $(STUDIO_SERVICE)/app && FLASK_APP=../../../$(FLASK_APP) ../../../$(FLASK) db upgrade
 
 
+#s3
+s3-configuration:
+	@cd $(STUDIO_SERVICE)/app/storage && awslocal s3api put-bucket-policy --bucket eventsync-asset  --policy file://bucket-policy.json && awslocal s3api put-bucket-cors --bucket eventsync-asset --cors-configuration file://bucket-cors.json
 
 
 # Webapp

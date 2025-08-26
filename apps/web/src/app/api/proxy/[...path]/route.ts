@@ -43,7 +43,7 @@ async function handler(
 
       body: req.body,
 
-      // @ts-ignore
+      // @ts-expect-error
       duplex: 'half',
     });
 
