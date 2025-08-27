@@ -78,7 +78,7 @@ def upload_complete(event_id, asset_id):
     asset.status = AssetStatus.uploaded
     asset.duration_ms = data.get("duration_ms")
     # f"https:/{Config.BUCKET}.s3.{Config.AWS_REGION}.amazonaws.com/events/{asset.event_id}/assets/{asset.id}"
-    asset.path =f"https:/{Config.BUCKET}.s3.{Config.AWS_REGION}.amazonaws.com/events/{asset.event_id}/assets/{asset.id}"
+    asset.path =f"https://{Config.BUCKET}.s3.{Config.AWS_REGION}.amazonaws.com/events/{asset.event_id}/assets/{asset.id}"
     db.session.commit()
 
     return jsonify({
