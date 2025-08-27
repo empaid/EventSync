@@ -44,8 +44,7 @@ def create_upload_link(event_id):
 
     presigned_url = s3_client.generate_presigned_post(
         Bucket=Config.BUCKET,
-        Key='events/' + str(event_id) + '/assets/' + str(asset.id),
-        Fields = {"Content-Type": asset.mime_type}
+        Key='events/' + str(event_id) + '/assets/' + str(asset.id)
     )
 
     return jsonify({
