@@ -1,7 +1,7 @@
 import EventDetails from "@/components/events/EventDetails";
 import EventUploader from "@/components/events/Uploader";
 
-export default async function EventPage({ params }: { params: { id: string } }) {
+export default async function EventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   return (

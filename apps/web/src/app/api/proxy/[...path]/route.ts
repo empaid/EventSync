@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 
 async function handler(
   req: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
 
   const studioBaseUrl = process.env.STUDIO_BASE_URL;
