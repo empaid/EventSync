@@ -189,9 +189,6 @@ export default function EventDetails({ eventId }: { eventId: string }) {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold">{data.title || "Untitled Event"}</h2>
-                <div className="mt-4">
-                  <QRCode eventId={data.id} />
-                </div>
                 <p className="text-sm text-gray-500">ID: {data.id}</p>
               </div>
               <div className="flex items-center gap-2">
@@ -322,8 +319,12 @@ export default function EventDetails({ eventId }: { eventId: string }) {
                 </tbody>
               </table>
             </div>
+            <div className="mt-4">
+                  <QRCode eventId={data.id} />
+            </div>
           </>
         ) : null}
+        
       </div>
     </section>
   );

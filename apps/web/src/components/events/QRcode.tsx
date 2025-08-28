@@ -4,7 +4,7 @@ import { QRCodeCanvas } from "qrcode.react";
 
 export default function QRCode({ eventId }: { eventId: string }) {
   const base = process.env.NEXT_PUBLIC_DOMAIN_NAME;
-  const url = `${base}/static/index2.html?event=${eventId}`;
+  const url = `${base}/static/index2.html?event_id=${eventId}`;
 
   return (
     <div className="flex flex-col items-center gap-2 p-4 rounded-lg border bg-white shadow-sm">
