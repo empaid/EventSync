@@ -19,7 +19,7 @@ class Asset(db.Model):
         default=uuid.uuid4,        # Python-side default
         nullable=False
     )
-    name = db.Column(db.String(255), unique=True, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
     mime_type = db.Column(db.String(255), nullable=False)
     event_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey("events.id"), nullable=False)
     path = db.Column(db.TEXT)
