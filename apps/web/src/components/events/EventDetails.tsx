@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import LiveEvent from "./LiveEvent";
+import QRCode from "./QRcode";
 type Asset = {
   id: string;
   name: string;
@@ -188,6 +189,9 @@ export default function EventDetails({ eventId }: { eventId: string }) {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold">{data.title || "Untitled Event"}</h2>
+                <div className="mt-4">
+                  <QRCode eventId={data.id} />
+                </div>
                 <p className="text-sm text-gray-500">ID: {data.id}</p>
               </div>
               <div className="flex items-center gap-2">
